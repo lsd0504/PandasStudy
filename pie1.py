@@ -1,22 +1,25 @@
+from cmath import nan
 from turtle import width
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-df_AVO = pd.read_excel('./AVO_testdata1.xlsx')
-df_AVB = pd.read_excel('./AVB_testdata1.xlsx')
-df_AVF = pd.read_excel('./AVF_testdata1.xlsx')
-df_AVK = pd.read_excel('./AVK_testdata1.xlsx')
-df_AVG = pd.read_excel('./AVG_testdata1.xlsx')
-# df_AVY = pd.read_excel('./AVY_testdata1.xlsx')
+df_AVO = pd.read_excel('./AVO_testdata2.xlsx')
+df_AVB = pd.read_excel('./AVB_testdata2.xlsx')
+df_AVF = pd.read_excel('./AVF_testdata2.xlsx')
+df_AVK = pd.read_excel('./AVK_testdata2.xlsx')
+df_AVG = pd.read_excel('./AVG_testdata2.xlsx')
+# df_AVY = pd.read_excel('./AVY_testdata2.xlsx')
 
 def cnt_acc(dataframe) :
     df = dataframe
     Org = df.loc[2,'Org Code']
-    date = '_[9/11-12]'
+    date = '_[0912-0915]'
     title = Org + date
     Res_all = len(df)
-    Res_NaN = len(df.loc[(df['AI Suggested Accuracy'] == -1)&(df['Data Type'] != 'Transfer')])
+    
+    Res_NaN = len(df.loc[(df['AI Suggested Accuracy'] == -1)&(df['AI Suggested Locator']==None)&(df['Data Type'] != 'Transfer')])
     Res_y = len(df.loc[(df['AI Suggested Accuracy'] == 'Y')&(df['Data Type'] != 'Transfer')])
     Res_n = len(df.loc[(df['AI Suggested Accuracy'] == 'N')&(df['Data Type'] != 'Transfer')])
     
@@ -42,14 +45,15 @@ def cnt_acc(dataframe) :
     plt.title(title)
     #plt.show()
     
-    plt.savefig('AVB.png')
+    plt.savefig("D:/Images/" + Org + '.png')
+    plt.cla()
        
    
 
-# cnt_acc(df_AVO)
+cnt_acc(df_AVO)
 cnt_acc(df_AVB)
-# cnt_acc(df_AVF)
-# cnt_acc(df_AVK)
-# cnt_acc(df_AVG)
+cnt_acc(df_AVF)
+cnt_acc(df_AVK)
+cnt_acc(df_AVG)
 
 # cnt_acc(df_AVY)
