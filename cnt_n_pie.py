@@ -15,7 +15,7 @@ cond_sugN = (df['AI Suggested Accuracy'] == 'N')&(df['Data Type'] != 'Transfer')
 df_sugN = df[cond_sugN].reset_index()
 cnt_near = 0
 cnt_far = 0
-list_Loc = []
+
 # print(df_sugN)
 for i in range(len(df_sugN)):
     sug_Loc = df_sugN.loc[i, 'AI Suggested Locator']
@@ -27,30 +27,20 @@ for i in range(len(df_sugN)):
         cnt_near += 1
     else :
         cnt_far += 1
-        list_Loc.append(act_Loc)
-        
-df_list_Loc = pd.DataFrame(list_Loc)
-# df_list_Loc.to_csv('cnt_n.csv', header=False)
 
+result = ['Same Loc', 'Wrong Loc']
+values = [cnt_near, cnt_far]
+explode = [0.05, 0.05]
 
-print('같은 창고 내 적치 :' , cnt_near)
-print('다른 창고 내 적치 :' , cnt_far)
-print('Wrong List')
-print(df_list_Loc.value_counts())
-
-# result = ['Same Loc', 'Wrong Loc']
-# values = [cnt_near, cnt_far]
-# explode = [0.05, 0.05]
-
-# def make_autopct(values):
-#     def my_autopct(pct):
-#         total = sum(values)
-#         val = int(round(pct*total/100.0))
-#         return '{p:.2f}% ({v:d})'.format(p=pct, v=val)
-#     return my_autopct
+def make_autopct(values):
+    def my_autopct(pct):
+        total = sum(values)
+        val = int(round(pct*total/100.0))
+        return '{p:.2f}% ({v:d})'.format(p=pct, v=val)
+    return my_autopct
     
-# plt.pie(values, labels = result, explode = explode, autopct= make_autopct(values))
+plt.pie(values, labels = result, explode = explode, autopct= make_autopct(values))
 
-# plt.savefig('AVG_N.png')
+plt.savefig('AVG_N.png')
 
 # plt.show()
