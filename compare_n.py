@@ -53,23 +53,41 @@ def comp_n(iwms, mldl, mldl_1, mldl_2):
     mldl_comp = mldl[['PART_NO', 'LOCATOR']]
     
     print('선택한 ORG : ' + Org)
+    cnt_near = 0
+    cnt_far = 0
+    for i in range(len(iwms_sugN)):
+        sug_Loc = iwms_sugN.loc[i, 'AI Suggested Locator']
+        act_Loc = iwms_sugN.loc[i, 'Actual Putaway Locator']
+        sug_Loc_slice = sug_Loc[3:5]
+        act_Loc_slice = act_Loc[3:5]
+    
+        if sug_Loc_slice == act_Loc_slice :
+            cnt_near += 1
+        else :
+            cnt_far += 1
     
     # find_new_loc(iwms_comp, mldl_comp)
     # get_rank(iwms_sugN, mldl_comp)
-    new_loc(iwms_sugN, mldl_1,mldl_2)
+    case_a, case_b, case_c = new_loc(drop_same(iwms_sugN), mldl_1, mldl_2)
+    
+    print('AI Sug Loc가 데이터에 존재하고 Actual이 학습 시점 이후에 존재 : ' , case_a)    
+    print('AI Sug Loc가 데이터에 존재, Actual도 학습 전에 존재, 우선순위 오류 : ' , case_b)
+    print('AI Sug Loc가 데이터상 존재 X, 클래스코드 통해 추천해준 경우 : ', case_c)
+    
+    cnt_acc(iwms, cnt_far, cnt_near, case_a, case_b, case_c)
 
 
 def new_loc(iwms, mldl_1, mldl_2):
-    cnt_a = 0
-    cnt_b = 0
-    cnt_c = 0
-    cnt_d = 0
-    cnt_e = 0
+    cnt_a = 0       #ai loc 과거에 존재, actual이 학습 후에 존재
+    cnt_b = 0       #우선순위 오류(ai loc, actual 모두 학습 전에 존재)
+    cnt_c = 0       #ai loc가 과거에 존재하지 않는 경우(클래스코드 통해 추천)
+    
+    cnt_e = 0       #에러(0 나오는게 정상)
     for index, row in iwms.iterrows():
-        mldl_vc_1 = pd.DataFrame(mldl_1[mldl_1['PART_NO'] == row['Part No']].value_counts()).reset_index()
-        mldl_vc_2 = pd.DataFrame(mldl_2[mldl_2['PART_NO'] == row['Part No']].value_counts()).reset_index()
-        len_old = len(mldl_vc_1[mldl_vc_1['LOCATOR'] == row['AI Suggested Locator']])
-        len_b = len(mldl_vc_1[mldl_vc_1['LOCATOR'] == row['Actual Putaway Locator']])
+        mldl_vc_1 = pd.DataFrame(mldl_1[mldl_1['PART_NO'] == row['Part No']].value_counts()).reset_index()      #iwms 파트넘버로 mldl 벨류카운트
+        # mldl_vc_2 = pd.DataFrame(mldl_2[mldl_2['PART_NO'] == row['Part No']].value_counts()).reset_index()
+        len_old = len(mldl_vc_1[mldl_vc_1['LOCATOR'] == row['AI Suggested Locator']])       #ai loc와 실제 loc가 동일
+        len_b = len(mldl_vc_1[mldl_vc_1['LOCATOR'] == row['Actual Putaway Locator']])       #actual loc와 실제 loc가 동일
 
         if (len_old > 0) and (len_b == 0) :
             cnt_a += 1
@@ -80,18 +98,15 @@ def new_loc(iwms, mldl_1, mldl_2):
         else :
             cnt_e += 1
           
-               
-    print('AI Sug Loc가 데이터에 존재하고 Actual이 학습 시점 이후에 존재 : ' , cnt_a)    
-    print('AI Sug Loc가 데이터에 존재, Actual도 학습 전에 존재, 우선순위 오류 : ' , cnt_b)
-    print('AI Sug Loc가 데이터상 존재 X, 클래스코드 통해 추천해준 경우 : ', cnt_c)
+    return(cnt_a, cnt_b, cnt_c)           
                               
             
-def date_change(mldl):
+def date_change(mldl):      #mldl, iwms 날짜 포멧 맞추기
     for i in range(len(mldl)):
         mldl.loc[i,'DATE'] = mldl.loc[i,'DATE'][:10]
         
  
-def drop_same(df):
+def drop_same(df):          #Y값 제거
     for i, row in df.iterrows():
         try:
             ai_su = row['AI Suggested Locator']
@@ -103,8 +118,46 @@ def drop_same(df):
             pass
     return df.reset_index(drop=True)
 
+def cnt_acc(df,far, near, a, b, c) :            #실제 변수 넣고 파이차트 함수 돌리는 부분
+    Org = df.loc[2,'Org Code']
+    
+    
+    Res_NaN = len(df.loc[(df['AI Suggested Accuracy'] == -1)&(df['AI Suggested Locator']==None)&(df['Data Type'] != 'Transfer')])
+    Res_y = len(df.loc[(df['AI Suggested Accuracy'] == 'Y')&(df['Data Type'] != 'Transfer')])
+    Res_n = len(df.loc[(df['AI Suggested Accuracy'] == 'N')&(df['Data Type'] != 'Transfer')])
+    Res_case_same = Res_y + near
+    Res_case_far = far    
+    Res_case_a = Res_y + a
+    Res_a_n = Res_n - a
+    Res_plus = Res_case_same + a
+    Res_plus_n = far - a
+    
+    make_pie(Org + ' Same Org', Res_NaN, Res_case_same, Res_case_far)       #same ORG 제외
+    make_pie(Org + ' case A', Res_NaN, Res_case_a, Res_a_n)                 #case A(ai loc 과거에 존재, actual이 학습 후에 존재)제외
+    make_pie(Org + ' Same + case A', Res_NaN, Res_plus, Res_plus_n)         #둘 다 제외
+    
+
+def make_pie(title, err, y, n):         #파이차트 그려서 저장하는 함수
+    result = ['-1', 'Y', 'N']
+    values = [err, y, n]
+    explode = [0.05, 0.05, 0.05]
+    
+    def make_autopct(values):
+        def my_autopct(pct):
+            total = sum(values)
+            val = int(round(pct*total/100.0))
+            return '{p:.2f}% ({v:d})'.format(p=pct, v=val)
+        return my_autopct
+    
+    plt.pie(values, labels = result, explode = explode, autopct= make_autopct(values))
+    plt.title(title)
+    #plt.show()
+    
+    plt.savefig("D:/Images/" + title + '.png')
+    plt.cla()
+
 # comp_n(iwms_AVK,mldl_AVK)
 # comp_n(drop_same(iwms_AVF),mldl_AVF, mldl_AVB_1, mldl_AVF_2)
-comp_n(drop_same(iwms_AVG), mldl_AVG, mldl_AVG_1, mldl_AVG_2)
+comp_n(iwms_AVG, mldl_AVG, mldl_AVG_1, mldl_AVG_2)
 # comp_n(iwms_CNZ,mldl_CNZ)
 
