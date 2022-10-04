@@ -125,22 +125,23 @@ def cnt_acc(df,far, near, a, b, c) :            #실제 변수 넣고 파이차�
     Res_NaN = len(df.loc[(df['AI Suggested Accuracy'] == -1)&(df['AI Suggested Locator']==None)&(df['Data Type'] != 'Transfer')])
     Res_y = len(df.loc[(df['AI Suggested Accuracy'] == 'Y')&(df['Data Type'] != 'Transfer')])
     Res_n = len(df.loc[(df['AI Suggested Accuracy'] == 'N')&(df['Data Type'] != 'Transfer')])
-    Res_case_same = Res_y + near
-    Res_case_far = far    
-    Res_case_a = Res_y + a
-    Res_a_n = Res_n - a
-    Res_plus = Res_case_same + a
-    Res_plus_n = far - a
+    # Res_case_same = Res_y + near
+    # Res_case_far = far    
+    # Res_case_a = Res_y + a
+    # Res_a_n = Res_n - a
+    # Res_plus = Res_case_same + a
+    # Res_plus_n = far - a
     
-    make_pie(Org + ' Same Org', Res_NaN, Res_case_same, Res_case_far)       #same ORG 제외
-    make_pie(Org + ' case A', Res_NaN, Res_case_a, Res_a_n)                 #case A(ai loc 과거에 존재, actual이 학습 후에 존재)제외
-    make_pie(Org + ' Same + case A', Res_NaN, Res_plus, Res_plus_n)         #둘 다 제외
+    # make_pie(Org + ' Same Org', Res_NaN, Res_case_same, Res_case_far)       #same ORG 제외
+    # make_pie(Org + ' case A', Res_NaN, Res_case_a, Res_a_n)                 #case A(ai loc 과거에 존재, actual이 학습 후에 존재)제외
+    # make_pie(Org + ' Same + case A', Res_NaN, Res_plus, Res_plus_n)         #둘 다 제외
+    make_pie(Org, near, a, b, c)                        #N값 전체 뽑는 그래프
     
 
-def make_pie(title, err, y, n):         #파이차트 그려서 저장하는 함수
-    result = ['-1', 'Y', 'N']
-    values = [err, y, n]
-    explode = [0.05, 0.05, 0.05]
+def make_pie(title, near, a, b, c):         #파이차트 그려서 저장하는 함수
+    result = ['Same Zone', 'A', 'B', 'C']
+    values = [near, a, b, c]
+    explode = [0.05, 0.05, 0.05, 0.05]
     
     def make_autopct(values):
         def my_autopct(pct):
@@ -155,6 +156,8 @@ def make_pie(title, err, y, n):         #파이차트 그려서 저장하는 함
     
     plt.savefig("D:/Images/" + title + '.png')
     plt.cla()
+
+
 
 # comp_n(iwms_AVK,mldl_AVK)
 # comp_n(drop_same(iwms_AVF),mldl_AVF, mldl_AVB_1, mldl_AVF_2)
